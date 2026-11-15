@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>lbnf168</title>
+<style>
+  :root{
+    --bg:#0a1a2e;
+    --bg2:#0f2440;
+    --felt:#123a5e;
+    --felt-line:#2a6ea8;
+    --chalk:#eaf2fa;
+    --gold:#4fb0e0;
+    --gold-dim:#1f5f8a;
+    --red:#b5473a;
+    --muted:#8fb4cf;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      /* page is intentionally a dark felt table regardless of system theme */
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0;
+    min-height:100%;
+    background:
+      radial-gradient(circle at 50% -10%, #1d2a22 0%, var(--bg) 55%),
+      var(--bg);
+    color:var(--chalk);
+    font-family: "Georgia", "Iowan Old Style", "Times New Roman", serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  header{
+    width:100%;
+    text-align:center;
+    padding:28px 16px 10px;
+  }
+  .brand{
+    font-size:clamp(28px,7vw,42px);
+    letter-spacing:0.08em;
+    font-weight:700;
+    color:var(--gold);
+    text-shadow:0 2px 0 rgba(0,0,0,0.4);
+    margin:0;
+  }
+  .brand small{
+    display:block;
+    font-family: Georgia, serif;
+    font-size:14px;
+    letter-spacing:0.3em;
+    color:var(--muted);
+    margin-top:6px;
+    font-weight:400;
+  }
+
+  main{
+    width:100%;
+    max-width:460px;
+    padding:0 16px 48px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .table{
+    width:100%;
+    background:
+      radial-gradient(circle at 30% 20%, #1c4433 0%, var(--felt) 60%);
+    border:2px solid var(--felt-line);
+    border-radius:18px;
+    padding:26px 20px 22px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.35), 0 10px 30px rgba(0,0,0,0.4);
+    position:relative;
+    overflow:hidden;
+  }
+  .table::before{
+    content:"";
+    position:absolute;
+    inset:10px;
+    border:1px dashed rgba(216,169,65,0.25);
+    border-radius:12px;
+    pointer-events:none;
+  }
+
+  .name-gate{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    text-align:left;
+  }
+  .name-gate p{
+    margin:0 0 4px;
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.5;
+  }
+  .name-gate label{
+    font-size:13px;
+    letter-spacing:0.04em;
+    color:var(--chalk);
+  }
+  .name-gate input{
+    background:rgba(0,0,0,0.3);
+    border:1px solid var(--felt-line);
+    border-radius:8px;
+    padding:12px 14px;
+    color:var(--chalk);
+    font-size:16px;
+    font-family:inherit;
+    outline:none;
+  }
+  .name-gate input:focus{
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(216,169,65,0.2);
+  }
+  .name-gate button{
+    margin-top:6px;
+  }
+
+  .player-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:18px;
+    gap:12px;
+  }
+  .player-bar .who{
+    font-size:15px;
+    color:var(--muted);
+  }
+  .player-bar .who b{
+    color:var(--chalk);
+  }
+  .coins{
+    font-size:22px;
+    color:var(--gold);
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .coins span{
+    font-size:13px;
+    color:var(--muted);
+    font-weight:400;
+    margin-right:6px;
+  }
+
+  .dice-row{
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    margin:18px 0 22px;
+  }
+  .die{
+    width:68px;
+    height:68px;
+    border-radius:14px;
+    background:linear-gradient(145deg,#fbf7ec,#e7ddc1);
+    box-shadow:0 6px 0 #9c8a55, 0 10px 16px rgba(0,0,0,0.45);
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-template-rows:repeat(3,1fr);
+    padding:10px;
+    transition:transform 0.5s ease;
+  }
+  .die.rolling{
+    animation: tumble 0.5s ease;
+  }
+  @keyframes tumble{
+    0%{transform:rotate(0deg) scale(1);}
+    40%{transform:rotate(200deg) scale(1.08);}
+    100%{transform:rotate(360deg) scale(1);}
+  }
+  .pip{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#2a2420;
+    align-self:center;
+    justify-self:center;
+    opacity:0;
+  }
+  .pip.on{opacity:1;}
+
+  button.roll{
+    width:100%;
+    background:linear-gradient(180deg,#e2b955,var(--gold-dim));
+    border:none;
+    color:#231a09;
+    font-family:inherit;
+    font-weight:700;
+    font-size:17px;
+    letter-spacing:0.03em;
+    padding:14px;
+    border-radius:10px;
+    cursor:pointer;
+    box-shadow:0 4px 0 #5c4414, 0 8px 14px rgba(0,0,0,0.3);
+    transition: transform 0.08s ease;
+  }
+  button.roll:active{transform:translateY(3px);box-shadow:0 1px 0 #5c4414;}
+  button.roll:disabled{opacity:0.6;cursor:default;}
+  button.roll:focus-visible{outline:3px solid var(--chalk);outline-offset:2px;}
+
+  .result{
+    min-height:22px;
+    text-align:center;
+    margin-top:14px;
+    font-size:14px;
+    color:var(--muted);
+  }
+  .result.win{color:var(--gold);}
+  .result.lose{color:var(--red);}
+
+  .rules{
+    margin-top:16px;
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.6;
+    text-align:center;
+  }
+
+  .cashout{
+    margin-top:22px;
+    text-align:center;
+  }
+  .cashout a{
+    display:inline-block;
+    color:var(--bg);
+    background:var(--chalk);
+    text-decoration:none;
+    padding:11px 22px;
+    border-radius:999px;
+    font-size:14px;
+    letter-spacing:0.02em;
+    font-weight:700;
+  }
+  .cashout p{
+    margin:10px 0 0;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .switch-player{
+    margin-top:18px;
+    text-align:center;
+  }
+  .switch-player button{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:inherit;
+    font-size:13px;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:4px;
+  }
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="brand">lbnf168<small>bàn xúc xắc đổi xu</small></p>
+</header>
+
+<main>
+  <div class="table">
+
+    <!-- Nhập tên, không mật khẩu -->
+    <div class="name-gate" id="gate">
+      <label for="nick">Tên người chơi</label>
+      <input id="nick" type="text" maxlength="20" placeholder="Nhập biệt danh của bạn" autocomplete="off">
+      <p>Không cần mật khẩu — chỉ cần một cái tên để lưu số xu của bạn trên máy này.</p>
+      <button class="roll" id="startBtn">Vào bàn chơi</button>
+    </div>
+
+    <!-- Giao diện chơi -->
+    <div class="hidden" id="game">
+      <div class="player-bar">
+        <div class="who">Người chơi: <b id="whoName">—</b></div>
+        <div class="coins"><span>Xu</span><span id="coinCount">0</span></div>
+      </div>
+
+      <div class="dice-row">
+        <div class="die" id="die1"></div>
+        <div class="die" id="die2"></div>
+      </div>
+
+      <button class="roll" id="rollBtn">Tung xúc sắc (−5 xu đặt cược)</button>
+
+      <div class="result" id="result"></div>
+
+      <div class="rules">
+        Mỗi lượt tung mất 5 xu đặt cược.<br>
+        Ra đôi (hai mặt giống nhau) → nhận 40 xu.<br>
+        Tổng hai mặt từ 8 trở lên → nhận 15 xu.<br>
+        Còn lại → mất lượt đặt cược.
+      </div>
+
+      <div class="cashout">
+        <a href="https://www.facebook.com/lee.baoo.namm.2025?locale=vi_VN" target="_blank" rel="noopener noreferrer">Đổi xu tại Facebook</a>
+        <p>Nhắn tin kèm biệt danh và số xu hiện có để đổi quà.</p>
+      </div>
+
+      <div class="switch-player">
+        <button id="switchBtn">Đổi người chơi khác</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  const gate = document.getElementById('gate');
+  const game = document.getElementById('game');
+  const nickInput = document.getElementById('nick');
+  const startBtn = document.getElementById('startBtn');
+  const whoName = document.getElementById('whoName');
+  const coinCount = document.getElementById('coinCount');
+  const rollBtn = document.getElementById('rollBtn');
+  const result = document.getElementById('result');
+  const switchBtn = document.getElementById('switchBtn');
+  const die1 = document.getElementById('die1');
+  const die2 = document.getElementById('die2');
+
+  const BET = 5;
+  const PAIR_WIN = 40;
+  const HIGH_WIN = 15;
+  const START_COINS = 20;
+
+  let currentNick = null;
+
+  function storageKey(nick){ return 'lbnf168_coins_' + nick.toLowerCase(); }
+
+  function loadCoins(nick){
+    try{
+      const raw = localStorage.getItem(storageKey(nick));
+      if(raw === null) return START_COINS;
+      const n = parseInt(raw, 10);
+      return isNaN(n) ? START_COINS : n;
+    }catch(e){ return START_COINS; }
+  }
+
+  function saveCoins(nick, value){
+    try{ localStorage.setItem(storageKey(nick), String(value)); }catch(e){}
+  }
+
+  function renderPips(dieEl, value){
+    dieEl.innerHTML = '';
+    const layouts = {
+      1:[4],
+      2:[0,8],
+      3:[0,4,8],
+      4:[0,2,6,8],
+      5:[0,2,4,6,8],
+      6:[0,2,3,5,6,8]
+    };
+    const on = layouts[value] || [];
+    for(let i=0;i<9;i++){
+      const p = document.createElement('div');
+      p.className = 'pip' + (on.includes(i) ? ' on' : '');
+      dieEl.appendChild(p);
+    }
+  }
+
+  renderPips(die1, 1);
+  renderPips(die2, 1);
+
+  let coins = START_COINS;
+
+  function updateCoinsDisplay(){
+    coinCount.textContent = coins;
+  }
+
+  startBtn.addEventListener('click', function(){
+    const nick = nickInput.value.trim();
+    if(!nick){
+      nickInput.focus();
+      return;
+    }
+    currentNick = nick;
+    coins = loadCoins(nick);
+    whoName.textContent = nick;
+    updateCoinsDisplay();
+    gate.classList.add('hidden');
+    game.classList.remove('hidden');
+    result.textContent = 'Chào ' + nick + ', chúc may mắn!';
+    result.className = 'result';
+  });
+
+  nickInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') startBtn.click();
+  });
+
+  rollBtn.addEventListener('click', function(){
+    if(coins < BET){
+      result.textContent = 'Bạn không đủ xu để đặt cược nữa.';
+      result.className = 'result lose';
+      return;
+    }
+
+    rollBtn.disabled = true;
+    coins -= BET;
+    updateCoinsDisplay();
+
+    die1.classList.add('rolling');
+    die2.classList.add('rolling');
+
+    setTimeout(function(){
+      const v1 = 1 + Math.floor(Math.random()*6);
+      const v2 = 1 + Math.floor(Math.random()*6);
+      renderPips(die1, v1);
+      renderPips(die2, v2);
+      die1.classList.remove('rolling');
+      die2.classList.remove('rolling');
+
+      let msg, cls;
+      if(v1 === v2){
+        coins += PAIR_WIN;
+        msg = 'Đôi ' + v1 + '-' + v2 + '! +' + PAIR_WIN + ' xu.';
+        cls = 'win';
+      } else if(v1 + v2 >= 8){
+        coins += HIGH_WIN;
+        msg = 'Tổng ' + (v1+v2) + ' điểm. +' + HIGH_WIN + ' xu.';
+        cls = 'win';
+      } else {
+        msg = 'Tổng ' + (v1+v2) + ' điểm. Mất lượt đặt cược.';
+        cls = 'lose';
+      }
+      result.textContent = msg;
+      result.className = 'result ' + cls;
+      updateCoinsDisplay();
+      saveCoins(currentNick, coins);
+      rollBtn.disabled = false;
+    }, 520);
+  });
+
+  switchBtn.addEventListener('click', function(){
+    game.classList.add('hidden');
+    gate.classList.remove('hidden');
+    nickInput.value = '';
+    nickInput.focus();
+  });
+})();
+</script>
+</body>
+</html>
